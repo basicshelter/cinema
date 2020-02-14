@@ -8,9 +8,12 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.example.cinema.exception.DirectorFilmsNotFoundException;
+import com.example.cinema.exception.DirectorNotFoundException;
 import com.example.cinema.model.Director;
 
 @Repository("director-postgres")
@@ -49,17 +52,26 @@ public class DirectorDataAccessService implements DirectorDao {
 
 	@Override
 	public Optional<Director> selectDirectorById(int queryId) {
-		final String sql = "SELECT * FROM Director WHERE id = ?";
-		Director director = jdbcTemplate.queryForObject(sql, new Object[] {queryId}, (resultSet, i) -> 
-			mapDirector(resultSet)
-		);
-		return Optional.ofNullable(director);
+		Director director = null;
+		try {
+			final String sql = "SELECT * FROM Director WHERE id = ?";
+			director = jdbcTemplate.queryForObject(sql, new Object[] {queryId}, (resultSet, i) -> 
+				mapDirector(resultSet)
+			);
+			return Optional.ofNullable(director);
+		} catch (DataAccessException e) {
+			throw new DirectorNotFoundException(queryId);
+		}
 	}
 
 	@Override
 	public int deleteDirectorById(int id) {
-		final String sql = "DELETE FROM Director WHERE id = ?";
-		return jdbcTemplate.update(sql, id);
+		try {
+			final String sql = "DELETE FROM Director WHERE id = ?";
+			return jdbcTemplate.update(sql, id);
+		} catch (DataAccessException e) {
+			throw new DirectorNotFoundException(id);
+		}
 	}
 
 	@Override
@@ -87,16 +99,20 @@ public class DirectorDataAccessService implements DirectorDao {
 				+ "FROM Director "
 				+ "JOIN Film ON director.id = film.director_id "
 				+ "WHERE director.id = ?";
-		return jdbcTemplate.query(sql, new Object[] {id}, rs -> {
-			Director director = null;
-			while(rs.next()) {
-				if(director == null) {
-					director = mapDirector(rs);
-				} 
-				director.addFilm(FilmDataAccessService.mapFilmPart(rs));
-			}
-			return Optional.ofNullable(director);
-		});
+//		try {
+			return jdbcTemplate.query(sql, new Object[] {id}, rs -> {
+				Director director = null;
+				while(rs.next()) {
+					if(director == null) {
+						director = mapDirector(rs);
+					} 
+					director.addFilm(FilmDataAccessService.mapFilmPart(rs));
+				}
+				return Optional.ofNullable(director);
+			});
+//		} catch (DataAccessException e) {
+//			throw new DirectorNotFoundException(id);
+//		}
 		
 	}
 	
@@ -109,16 +125,20 @@ public class DirectorDataAccessService implements DirectorDao {
 				+ "JOIN Film ON director.id = film.director_id "
 				+ "WHERE director.id = ? "
 				+ "AND release_date > ?";
-		return jdbcTemplate.query(sql, new Object[] {id, minReleaseDate}, rs -> {
-			Director director = null;
-			while(rs.next()) {
-				if(director == null) {
-					director = mapDirector(rs);
-				} 
-				director.addFilm(FilmDataAccessService.mapFilmPart(rs));
-			}
-			return Optional.ofNullable(director);
-		});
+		try {
+			return jdbcTemplate.query(sql, new Object[] {id, minReleaseDate}, rs -> {
+				Director director = null;
+				while(rs.next()) {
+					if(director == null) {
+						director = mapDirector(rs);
+					} 
+					director.addFilm(FilmDataAccessService.mapFilmPart(rs));
+				}
+				return Optional.ofNullable(director);
+			});
+		} catch (DataAccessException e) {
+			throw new DirectorFilmsNotFoundException(id, minReleaseDate);
+		}
 	}
 	
 	@Override

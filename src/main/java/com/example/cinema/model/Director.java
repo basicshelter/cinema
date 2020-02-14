@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Past;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -15,13 +17,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class Director {
 	@JsonProperty("id")
 	private int id;
-	@NotBlank
+	@NotBlank(message = "{director.firstName.notBlank}")
 	@JsonProperty("firstName")
 	private String firstName;
-	@NotBlank
+	@NotBlank(message = "{director.lastName.notBlank}")
 	@JsonProperty("lastName")
 	private String lastName;
 	@JsonFormat(pattern = "yyyy-MM-dd")
+	@NotNull(message = "{director.birthDate.notNull}")
+	@Past(message = "{director.birthDate.past}")
 	@JsonProperty("birthDate")
 	private LocalDate birthDate;
 	@JsonProperty("films")

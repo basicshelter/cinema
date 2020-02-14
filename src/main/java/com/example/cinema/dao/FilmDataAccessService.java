@@ -7,9 +7,11 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.example.cinema.exception.FilmNotFoundException;
 import com.example.cinema.model.Film;
 
 @Repository("film-postgres")
@@ -49,9 +51,14 @@ public class FilmDataAccessService implements FilmDao {
 	@Override
 	public Optional<Film> selectFilmById(int id) {
 		final String sql = "SELECT * FROM Film WHERE id = ?";
-		Film film = jdbcTemplate.queryForObject(sql, new Object[] {id}, (resultSet, i) -> 
-			mapFilmPart(resultSet)
-		);
+		Film film;
+		try {
+			film = jdbcTemplate.queryForObject(sql, new Object[] {id}, (resultSet, i) -> 
+				mapFilmPart(resultSet)
+			);
+		} catch (DataAccessException e) {
+			throw new FilmNotFoundException(id);
+		}
 		return Optional.ofNullable(film);
 	}
 

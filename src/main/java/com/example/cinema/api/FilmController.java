@@ -1,12 +1,16 @@
 package com.example.cinema.api;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,7 +18,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.WebRequest;
 
+import com.example.cinema.exception.CinemaErrorDetails;
+import com.example.cinema.exception.FilmNotFoundException;
 import com.example.cinema.model.Film;
 import com.example.cinema.service.FilmService;
 
@@ -30,7 +37,7 @@ public class FilmController {
 	}
 	
 	@PostMapping
-	public void insertFilm(@RequestBody Film film) {
+	public void insertFilm(@RequestBody @Valid @NotNull Film film) {
 		filmService.insertFilm(film);
 	}
 	
@@ -41,7 +48,7 @@ public class FilmController {
 	
 	@GetMapping(path = "{id}")
 	public Film getFilmById(@PathVariable("id") int id) {
-		return filmService.getFilmById(id).orElse(null);
+		return filmService.getFilmById(id).orElseThrow(() -> new FilmNotFoundException(id));
 	}
 	
 	@DeleteMapping(path = "{id}")
@@ -50,7 +57,16 @@ public class FilmController {
 	}
 	
 	@PutMapping(path = "{id}")
-	public void updateFilm(@PathVariable("id") int id, @Valid @NotNull @RequestBody Film film) {
+	public void updateFilm(@PathVariable("id") int id, @RequestBody @Valid @NotNull Film film) {
 		filmService.updateFilm(id, film);
 	}
+	
+	@ExceptionHandler(FilmNotFoundException.class)
+	public ResponseEntity<CinemaErrorDetails> handleDirectorFilmsNotFound(Exception ex, WebRequest request) {
+
+		CinemaErrorDetails error = new CinemaErrorDetails(LocalDateTime.now(), HttpStatus.NOT_FOUND.value(), ex.getMessage());
+
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+
+    }
 }
