@@ -101,15 +101,6 @@ public class DirectorController {
 
     }
 	
-	@ExceptionHandler(DirectorFilmsNotFoundException.class)
-	public ResponseEntity<CinemaErrorDetails> handleDirectorFilmsNotFound(Exception ex, WebRequest request) {
-
-		CinemaErrorDetails error = new CinemaErrorDetails(LocalDateTime.now(), HttpStatus.NOT_FOUND.value(), ex.getMessage());
-
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-
-    }
-	
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<CinemaErrorDetails> handleValidationExceptions(MethodArgumentNotValidException ex) {
 
