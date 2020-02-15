@@ -1,7 +1,7 @@
 com.example.cinema
 =======================
 
-To run the application you should have a postgres server running on port 5432. Database name: `cinema`. Database variables are stored in `'application.properties'`.
+To run the application you should have a postgres server running on port 5432. Database name: `cinema`. Database variables are stored in `src/main/resources/application.properties`.
 Scripts to create tables and insert initial data are located in folder `'sql-scripts'`.
 
 The jar file is located in folder `'target'`. 
